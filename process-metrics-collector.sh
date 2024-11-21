@@ -81,29 +81,38 @@ function plotGraph() {
       # "lt rgb " - line style color
       # "t " - legend labels
       #
-      # CPU and memory usage
-      set output "${dir_name}/cpu-mem-usage.png"
-      set title "CPU and Memory Usage for Proces ID $pid"
-      plot "$csv_filename" using 2:xticlabels(1) with lines smooth unique lw 2 lt rgb "#4848d6" t "CPU Usage %",\
-       "$csv_filename" using 3:xticlabels(1) with lines smooth unique lw 2 lt rgb "#b40000" t "Memory Usage %"
+      # CPU usage
+      set output "${dir_name}/cpu-usage.png"
+      set title "CPU Usage for Proces ID $pid"
+      plot "$csv_filename" using 5:xticlabels(1) with lines smooth unique lw 2 lt rgb "#4848d6" t "CPU Usage %"
+
+      # Mmemory usage percentage
+      set output "${dir_name}/mem-usage-percent.png"
+      set title "Memory Usage for Proces ID % $pid C++ $pid2"
+      plot "$csv_filename" using 6:xticlabels(1) with lines smooth unique lw 2 lt rgb "dark-plum" t "Memory Usage %"
+
+      # Memory usage
+      set output "${dir_name}/mem-usage.png"
+      set title "Memory Usage for Proces ID $pid C++ $pid2"
+      plot "$csv_filename" using 3:xticlabels(1) with lines smooth unique lw 2 lt rgb "tan1" t "Memory Usage RES"
 
       # TCP count
       set output "${dir_name}/tcp-count.png"
       set title "TCP Connections Count for Proces ID $pid"
-      plot "$csv_filename" using 4:xticlabels(1) with lines smooth unique lw 2 lt rgb "#ed8004" t "TCP Connection Count"
+      plot "$csv_filename" using 7:xticlabels(1) with lines smooth unique lw 2 lt rgb "#ed8004" t "TCP Connection Count"
 
       # Thread count
       set output "${dir_name}/thread-count.png"
       set title "Thread Count for Proces ID $pid"
-      plot "$csv_filename" using 5:xticlabels(1) with lines smooth unique lw 2 lt rgb "#48d65b" t "Thread Count"
+      plot "$csv_filename" using 8:xticlabels(1) with lines smooth unique lw 2 lt rgb "#48d65b" t "Thread Count"
 
        # All together
        set output "${dir_name}/all-metrices.png"
        set title "All Metrics for Proces ID $pid"
-       plot "$csv_filename" using 2:xticlabels(1) with lines smooth unique lw 2 lt rgb "#4848d6" t "CPU Usage %",\
-        "$csv_filename" using 3:xticlabels(1) with lines smooth unique lw 2 lt rgb "#b40000" t "Memory Usage %", \
-        "$csv_filename" using 4:xticlabels(1) with lines smooth unique lw 2 lt rgb "#ed8004" t "TCP Connection Count", \
-        "$csv_filename" using 5:xticlabels(1) with lines smooth unique lw 2 lt rgb "#48d65b" t "Thread Count"
+       plot "$csv_filename" using 5:xticlabels(1) with lines smooth unique lw 2 lt rgb "#4848d6" t "CPU Usage %",\
+        "$csv_filename" using 6:xticlabels(1) with lines smooth unique lw 2 lt rgb "#b40000" t "Memory Usage %", \
+        "$csv_filename" using 7:xticlabels(1) with lines smooth unique lw 2 lt rgb "#ed8004" t "TCP Connection Count", \
+        "$csv_filename" using 8:xticlabels(1) with lines smooth unique lw 2 lt rgb "#48d65b" t "Thread Count"
 EOF
   fi
 
@@ -120,7 +129,7 @@ echo "Writing data to CSV file $csv_filename..."
 touch $csv_filename
 
 # write CSV headers
-echo "Time,CPU,Memory,TCP Connections,Thread Count" >> $csv_filename
+echo "Time,VIRT, RES, SHR, CPU,Memory,TCP Connections,Thread Count" >> $csv_filename
 
 # check if process exists
 kill -0 $pid > /dev/null 2>&1
@@ -133,9 +142,9 @@ while [ $pid_exist == 0 ]; do
   pid_exist=$?
 
   if [ $pid_exist == 0 ]; then
-    # read cpu and mem percentages
+    # read cpu and mem (VIRT, RES, SHR), thread counts, tcp connections
     timestamp=$(date +"%b %d %H:%M:%S")
-    cpu_mem_usage=$(top -b -n 1 | grep -w -E "^ *$pid" | awk '{print $9 "," $10}')
+    cpu_mem_usage=$(top -b -n 1 | grep -w -E "^ *$pid" | awk '{print $5 "," $6 "," $7 "," $9 "," $10}')
     tcp_cons=$(lsof -i -a -p $pid -w | tail -n +2 | wc -l)
     tcount=$(ps -o nlwp h $pid | tr -d ' ')
 
